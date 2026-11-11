@@ -33,8 +33,9 @@ RUN touch backend/hypercraft-core/src/lib.rs \
 # 运行时：JRE 21，便于直接拉起 Minecraft 等 Java 进程
 FROM eclipse-temurin:21-jre-jammy
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl tini xz-utils unzip \
-  && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends ca-certificates curl tini xz-utils unzip git \
+  && rm -rf /var/lib/apt/lists/* \
+  && git config --system --add safe.directory '*'
 
 # 内嵌 mise：用于在面板中安装多个 Java 运行环境（数据隔离在 /data/mise）
 # 国内构建可传 --build-arg GITHUB_PROXY=https://ghfast.top/
