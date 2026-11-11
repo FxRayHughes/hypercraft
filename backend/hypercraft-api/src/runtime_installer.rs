@@ -97,9 +97,12 @@ impl DownloadSettings {
             .unwrap_or_else(default_mirror);
         let proxy = std::env::var("HC_GITHUB_PROXY").unwrap_or_default();
         // 未显式配置时：Temurin 走国内镜像即视为国内环境
+        // 空值（如 1Panel 升级后未填写的新参数）视为未配置，按 Temurin 镜像推断
         let cn = std::env::var("HC_CN_MIRRORS")
             .ok()
-            .map(|s| matches!(s.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+            .map(|s| s.trim().to_ascii_lowercase())
+            .filter(|s| !s.is_empty())
+            .map(|s| matches!(s.as_str(), "1" | "true" | "yes" | "on"))
             .unwrap_or(mirror != "official");
         Self::normalized(mirror, proxy, cn).unwrap_or(Self {
             adoptium_mirror: default_mirror(),
