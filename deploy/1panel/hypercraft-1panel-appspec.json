@@ -253,7 +253,7 @@
       "edit": true
     },
     {
-      "default": "java",
+      "default": "*",
       "envKey": "HC_ALLOWED_COMMANDS",
       "required": true,
       "type": "text",
