@@ -33,8 +33,19 @@ RUN touch backend/hypercraft-core/src/lib.rs \
 # 运行时：JRE 21，便于直接拉起 Minecraft 等 Java 进程
 FROM eclipse-temurin:21-jre-jammy
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl tini \
+  && apt-get install -y --no-install-recommends ca-certificates curl tini xz-utils unzip \
   && rm -rf /var/lib/apt/lists/*
+
+# 内嵌 mise：用于在面板中安装多个 Java 运行环境（数据隔离在 /data/mise）
+# 国内构建可传 --build-arg GITHUB_PROXY=https://ghfast.top/
+ARG MISE_VERSION=2026.11.6
+ARG GITHUB_PROXY=
+RUN set -eux; \
+  case "$(uname -m)" in x86_64) a=x64 ;; aarch64) a=arm64 ;; *) echo "unsupported arch"; exit 1 ;; esac; \
+  url="https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-linux-${a}-musl"; \
+  curl -fsSL --retry 3 -o /usr/local/bin/mise "${GITHUB_PROXY}${url}" || curl -fsSL --retry 3 -o /usr/local/bin/mise "$url"; \
+  chmod 755 /usr/local/bin/mise; \
+  MISE_DATA_DIR=/tmp/m MISE_CACHE_DIR=/tmp/m MISE_STATE_DIR=/tmp/m mise --version; rm -rf /tmp/m
 
 WORKDIR /app
 COPY --from=builder /src/backend/target/release/hypercraft-api /usr/local/bin/hypercraft-api
@@ -54,7 +65,8 @@ RUN chmod 755 /entrypoint-api.sh
 USER 1000:1000
 ENV HC_DATA_DIR=/data \
     HC_BIND=0.0.0.0:8080 \
-    HC_ALLOWED_COMMANDS=java,java.exe,node,node.exe \
+    HC_ALLOWED_COMMANDS=java \
+    HC_MISE_BIN=/usr/local/bin/mise \
     HC_ALLOWED_CWD_PREFIXES=/services \
     RUST_LOG=info
 

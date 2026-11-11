@@ -12,6 +12,14 @@ import type {
   CreateApiKeyRequest,
   CreateApiKeyResponse,
   UpdateApiKeyRequest,
+  Runtime,
+  JavaCatalog,
+  RuntimeDownloadSettings,
+  InstallTask,
+  ToolListResponse,
+  ToolVersions,
+  RuntimeStorage,
+  CleanupResult,
   ServiceSummary,
   ServiceManifest,
   ServiceDetail,
@@ -450,6 +458,89 @@ class ApiClient {
   async revokeApiKey(id: string): Promise<ApiKeySummary> {
     return this.request<ApiKeySummary>(`/api-keys/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  // ==================== 运行环境 ====================
+
+  async listRuntimes(tool?: string): Promise<Runtime[]> {
+    return this.request<Runtime[]>(`/runtimes${tool ? `?tool=${encodeURIComponent(tool)}` : ""}`);
+  }
+
+  async listRuntimeTools(): Promise<ToolListResponse> {
+    return this.request<ToolListResponse>("/runtimes/tools");
+  }
+
+  async getToolVersions(tool: string, refresh = false): Promise<ToolVersions> {
+    return this.request<ToolVersions>(
+      `/runtimes/tools/${encodeURIComponent(tool)}/versions${refresh ? "?refresh=true" : ""}`
+    );
+  }
+
+  async getJavaCatalog(refresh = false): Promise<JavaCatalog> {
+    return this.request<JavaCatalog>(`/runtimes/java/catalog${refresh ? "?refresh=true" : ""}`);
+  }
+
+  async installRuntime(req: { tool?: string; spec: string; id?: string; name?: string }): Promise<InstallTask> {
+    return this.request<InstallTask>("/runtimes/install", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  }
+
+  async listInstallTasks(): Promise<InstallTask[]> {
+    return this.request<InstallTask[]>("/runtimes/tasks");
+  }
+
+  async cancelInstallTask(id: string): Promise<void> {
+    await this.request<void>(`/runtimes/tasks/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+  }
+
+  async deleteInstallTask(id: string): Promise<void> {
+    await this.request<void>(`/runtimes/tasks/${encodeURIComponent(id)}`, { method: "DELETE" });
+  }
+
+  async clearInstallTasks(): Promise<{ removed: number }> {
+    return this.request<{ removed: number }>("/runtimes/tasks", { method: "DELETE" });
+  }
+
+  async getRuntimeStorage(): Promise<RuntimeStorage> {
+    return this.request<RuntimeStorage>("/runtimes/storage");
+  }
+
+  async cleanupRuntimes(req: { tasks?: boolean; cache?: boolean; orphans?: boolean }): Promise<CleanupResult> {
+    return this.request<CleanupResult>("/runtimes/cleanup", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  }
+
+  async registerJavaRuntime(req: { id: string; name?: string; home: string }): Promise<Runtime> {
+    return this.request<Runtime>("/runtimes", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  }
+
+  async renameRuntime(id: string, name: string): Promise<Runtime> {
+    return this.request<Runtime>(`/runtimes/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async deleteRuntime(id: string): Promise<void> {
+    await this.request<void>(`/runtimes/${encodeURIComponent(id)}`, { method: "DELETE" });
+  }
+
+  async getRuntimeSettings(): Promise<RuntimeDownloadSettings> {
+    return this.request<RuntimeDownloadSettings>("/runtimes/settings");
+  }
+
+  async updateRuntimeSettings(req: RuntimeDownloadSettings): Promise<RuntimeDownloadSettings> {
+    return this.request<RuntimeDownloadSettings>("/runtimes/settings", {
+      method: "PUT",
+      body: JSON.stringify(req),
     });
   }
 

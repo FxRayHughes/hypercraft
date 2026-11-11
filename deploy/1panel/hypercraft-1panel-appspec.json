@@ -2,7 +2,7 @@
   "key": "hypercraft",
   "name": "Hypercraft",
   "title": "Hypercraft",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": {
     "en": "Cross-platform process management and monitoring for Minecraft servers and long-running processes",
     "es-es": "Gestión y monitorización de procesos multiplataforma para servidores de Minecraft y procesos de larga duración",
@@ -24,6 +24,10 @@
         {
           "title": "进程管理",
           "description": "启动、停止、重启、强杀，支持自动重启与优雅关闭指令。"
+        },
+        {
+          "title": "多运行环境",
+          "description": "内置 mise，一键安装 Java（Temurin、Zulu、Corretto、Dragonwell、Kona 等）、Node.js、Python、Go 等任意工具，每个服务可同时选择多个；支持清华 / 中科大 / npmmirror 镜像与 GitHub 代理。"
         },
         {
           "title": "Web 终端",
@@ -53,6 +57,10 @@
         {
           "title": "Process Management",
           "description": "Start, stop, restart and kill processes, with auto-restart and graceful shutdown commands."
+        },
+        {
+          "title": "Multiple Runtimes",
+          "description": "Built-in mise installs Java (Temurin, Zulu, Corretto, Dragonwell, Kona…), Node.js, Python, Go and more; select several per service, with mirror support."
         },
         {
           "title": "Web Terminal",
@@ -145,7 +153,7 @@
     },
     {
       "name": "api",
-      "image": "${HC_IMAGE_REGISTRY}/hypercraft/hypercraft-api:0.1.0",
+      "image": "${HC_IMAGE_REGISTRY}/hypercraft/hypercraft-api:0.3.0",
       "ports": [
         {
           "host_env": "PANEL_APP_PORT_GAME",
@@ -176,7 +184,10 @@
         "HC_ALLOWED_COMMANDS": "${HC_ALLOWED_COMMANDS}",
         "HC_ALLOWED_CWD_PREFIXES": "/services",
         "HC_CORS_ORIGINS": "http://localhost:3000",
-        "RUST_LOG": "info"
+        "RUST_LOG": "info",
+        "HC_JAVA_MIRROR": "${HC_JAVA_MIRROR}",
+        "HC_GITHUB_PROXY": "${HC_GITHUB_PROXY}",
+        "HC_CN_MIRRORS": "${HC_CN_MIRRORS}"
       },
       "healthcheck": {
         "test": [
@@ -193,7 +204,7 @@
     },
     {
       "name": "web",
-      "image": "${HC_IMAGE_REGISTRY}/hypercraft/hypercraft-web:0.1.0",
+      "image": "${HC_IMAGE_REGISTRY}/hypercraft/hypercraft-web:0.3.0",
       "environment": {
         "TZ": "Asia/Shanghai",
         "NEXT_PUBLIC_API_URL": "/api",
@@ -238,7 +249,8 @@
         "zh-Hant": "超級管理員口令（≥32 位，留空自動產生）",
         "zh": "超级管理员口令（≥32 位，留空自动生成）",
         "tr": "Süper Yönetici Belirteci (>=32 karakter, boş bırakılırsa otomatik)"
-      }
+      },
+      "edit": true
     },
     {
       "default": "java",
@@ -258,7 +270,8 @@
         "zh-Hant": "允許執行的命令（逗號分隔，* 不限制）",
         "zh": "允许执行的命令（逗号分隔，* 不限制）",
         "tr": "İzin Verilen Komutlar (virgülle ayrılmış, * = sınırsız)"
-      }
+      },
+      "edit": true
     },
     {
       "default": "103.238.187.8:8083",
@@ -278,7 +291,95 @@
         "zh-Hant": "映像倉庫位址",
         "zh": "镜像仓库地址",
         "tr": "İmaj Kayıt Defteri"
+      },
+      "edit": true
+    },
+    {
+      "default": "tuna",
+      "envKey": "HC_JAVA_MIRROR",
+      "required": true,
+      "type": "select",
+      "values": [
+        {
+          "label": "清华 TUNA",
+          "value": "tuna"
+        },
+        {
+          "label": "中科大 USTC",
+          "value": "ustc"
+        },
+        {
+          "label": "Official (GitHub)",
+          "value": "official"
+        }
+      ],
+      "labelEn": "Java Mirror (Temurin)",
+      "labelZh": "Java 镜像（Temurin）",
+      "label": {
+        "en": "Java Download Mirror (Temurin)",
+        "es-es": "Espejo de descarga de Java (Temurin)",
+        "ja": "Java ダウンロードミラー（Temurin）",
+        "ms": "Cermin Muat Turun Java (Temurin)",
+        "pt-br": "Espelho de download do Java (Temurin)",
+        "ru": "Зеркало загрузки Java (Temurin)",
+        "ko": "Java 다운로드 미러 (Temurin)",
+        "zh-Hant": "Java 下載鏡像（Temurin）",
+        "zh": "Java 下载镜像（Temurin）",
+        "tr": "Java İndirme Yansısı (Temurin)"
+      },
+      "edit": true
+    },
+    {
+      "default": "true",
+      "edit": true,
+      "envKey": "HC_CN_MIRRORS",
+      "required": true,
+      "type": "select",
+      "values": [
+        {
+          "label": "开启 / On",
+          "value": "true"
+        },
+        {
+          "label": "关闭 / Off",
+          "value": "false"
+        }
+      ],
+      "labelEn": "CN Mirrors for Node.js / Python / Go",
+      "labelZh": "Node.js / Python / Go 国内镜像",
+      "label": {
+        "en": "CN Mirrors for Node.js / Python / Go",
+        "es-es": "Espejos de China para Node.js / Python / Go",
+        "ja": "Node.js / Python / Go の中国ミラー",
+        "ms": "Cermin China untuk Node.js / Python / Go",
+        "pt-br": "Espelhos da China para Node.js / Python / Go",
+        "ru": "Китайские зеркала для Node.js / Python / Go",
+        "ko": "Node.js / Python / Go 중국 미러",
+        "zh-Hant": "Node.js / Python / Go 國內鏡像",
+        "zh": "Node.js / Python / Go 国内镜像",
+        "tr": "Node.js / Python / Go için Çin Yansıları"
       }
+    },
+    {
+      "default": "https://ghfast.top/",
+      "envKey": "HC_GITHUB_PROXY",
+      "required": false,
+      "type": "text",
+      "labelEn": "GitHub Proxy (optional)",
+      "labelZh": "GitHub 代理（可选）",
+      "label": {
+        "en": "GitHub Proxy (optional)",
+        "es-es": "Proxy de GitHub (opcional)",
+        "ja": "GitHub プロキシ（任意）",
+        "ms": "Proksi GitHub (pilihan)",
+        "pt-br": "Proxy do GitHub (opcional)",
+        "ru": "Прокси GitHub (необязательно)",
+        "ko": "GitHub 프록시 (선택)",
+        "zh-Hant": "GitHub 代理（選填）",
+        "zh": "GitHub 代理（可选）",
+        "tr": "GitHub Proxy (isteğe bağlı)"
+      },
+      "edit": true
     }
   ],
   "notes": [
@@ -287,6 +388,6 @@
     "同源网关 nginx 把 /api/* 去前缀转发到 api:8080，前端 NEXT_PUBLIC_API_URL=/api。",
     "仅构建 amd64 镜像。",
     "1panel-network 为所有应用共享，网关按容器名 ${CONTAINER_NAME}-api / -web 寻址，避免与其他应用的 api/web 服务名冲突。",
-    "API 镜像仅含 JRE 21（无 Node、无 javac），命令白名单默认 java。"
+    "API 镜像内嵌 mise，Java 运行环境安装到 data/mise；默认自带 JRE 21 作为系统 Java。"
   ]
 }
