@@ -33,13 +33,25 @@ import type {
   WebSessionResponse,
 } from "./types";
 
+/**
+ * 支持相对路径（如 "/api"）：在浏览器中基于当前页面 Origin 解析为绝对地址，
+ * 便于同源反代部署（1Panel 等），WebSocket 地址也由此正确推导。
+ */
+function resolveApiBaseUrl(raw: string): string {
+  const value = raw.trim().replace(/\/+$/, "");
+  if (typeof window !== "undefined" && value.startsWith("/")) {
+    return `${window.location.origin}${value}`;
+  }
+  return value;
+}
+
 function getApiBaseUrl(): string {
   // Runtime config takes precedence (from public/config.js)
   if (typeof window !== "undefined" && window.__RUNTIME_CONFIG__?.apiUrl) {
-    return window.__RUNTIME_CONFIG__.apiUrl;
+    return resolveApiBaseUrl(window.__RUNTIME_CONFIG__.apiUrl);
   }
   // Fallback to build-time env or default
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  return resolveApiBaseUrl(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080");
 }
 
 export const SESSION_EXPIRES_AT_KEY = "hc_session_expires_at";

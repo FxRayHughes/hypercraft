@@ -4,6 +4,9 @@
 FROM rust:1-bookworm AS builder
 WORKDIR /src
 
+# 可选 crates 镜像（国内构建可传 --build-arg CARGO_MIRROR=sparse+https://rsproxy.cn/index/）
+ARG CARGO_MIRROR=
+RUN if [ -n "$CARGO_MIRROR" ]; then mkdir -p "$CARGO_HOME" && printf '[source.crates-io]\nreplace-with = "mirror"\n[source.mirror]\nregistry = "%s"\n' "$CARGO_MIRROR" > "$CARGO_HOME/config.toml"; fi
 # 先拷依赖清单以利用缓存
 COPY backend/Cargo.toml backend/Cargo.lock ./backend/
 COPY backend/hypercraft-core/Cargo.toml ./backend/hypercraft-core/
@@ -37,11 +40,18 @@ WORKDIR /app
 COPY --from=builder /src/backend/target/release/hypercraft-api /usr/local/bin/hypercraft-api
 COPY --from=builder /src/backend/target/release/hypercraft-cli /usr/local/bin/hypercraft-cli
 
-RUN mkdir -p /data /services \
-  && useradd --system --home /app --shell /usr/sbin/nologin hypercraft \
-  && chown -R hypercraft:hypercraft /app /data /services
+# 固定 UID/GID=1000，便于宿主机挂载目录预先授权（1Panel init.sh 依赖此值）
+# 基础镜像自带 uid 1000 的 ubuntu 用户，先移除避免冲突
+RUN (userdel -r ubuntu 2>/dev/null || true) \
+  && groupadd --gid 1000 hypercraft \
+  && useradd --uid 1000 --gid 1000 --home /app --shell /usr/sbin/nologin hypercraft \
+  && mkdir -p /data /services \
+  && chown -R 1000:1000 /app /data /services
 
-USER hypercraft
+COPY docker/entrypoint-api.sh /entrypoint-api.sh
+RUN chmod 755 /entrypoint-api.sh
+
+USER 1000:1000
 ENV HC_DATA_DIR=/data \
     HC_BIND=0.0.0.0:8080 \
     HC_ALLOWED_COMMANDS=java,java.exe,node,node.exe \
@@ -53,5 +63,5 @@ VOLUME ["/data", "/services"]
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
   CMD curl -fsS "http://127.0.0.1:8080/health" || exit 1
 
-ENTRYPOINT ["tini", "--"]
+ENTRYPOINT ["tini", "--", "/entrypoint-api.sh"]
 CMD ["hypercraft-api"]
