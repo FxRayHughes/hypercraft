@@ -26,7 +26,6 @@ additionalProperties:
   limit: 0
   architectures:
     - amd64
-    - arm64
   website: https://github.com/Bkm016/hypercraft
   github: https://github.com/Bkm016/hypercraft
   document: "https://github.com/Bkm016/hypercraft#readme"

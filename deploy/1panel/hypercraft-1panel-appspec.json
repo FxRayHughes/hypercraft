@@ -2,7 +2,7 @@
   "key": "hypercraft",
   "name": "Hypercraft",
   "title": "Hypercraft",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "description": {
     "en": "Cross-platform process management and monitoring for Minecraft servers and long-running processes",
     "es-es": "Gestión y monitorización de procesos multiplataforma para servidores de Minecraft y procesos de larga duración",
@@ -93,8 +93,7 @@
   "website": "https://github.com/Bkm016/hypercraft",
   "document": "https://github.com/Bkm016/hypercraft#readme",
   "architectures": [
-    "amd64",
-    "arm64"
+    "amd64"
   ],
   "memoryRequired": 1024,
   "crossVersionUpdate": true,
@@ -112,7 +111,7 @@
   "services": [
     {
       "name": "gateway",
-      "image": "nginx:1.27-alpine",
+      "image": "${HC_IMAGE_REGISTRY}/library/nginx:1.27-alpine",
       "primary": true,
       "ports": [
         {
@@ -154,7 +153,7 @@
     },
     {
       "name": "api",
-      "image": "${HC_IMAGE_REGISTRY}/hypercraft-api:0.1.0",
+      "image": "${HC_IMAGE_REGISTRY}/hypercraft/hypercraft-api:0.3.1",
       "ports": [
         {
           "host_env": "PANEL_APP_PORT_GAME",
@@ -205,7 +204,7 @@
     },
     {
       "name": "web",
-      "image": "${HC_IMAGE_REGISTRY}/hypercraft-web:0.1.0",
+      "image": "${HC_IMAGE_REGISTRY}/hypercraft/hypercraft-web:0.3.1",
       "environment": {
         "TZ": "Asia/Shanghai",
         "NEXT_PUBLIC_API_URL": "/api",
@@ -275,7 +274,7 @@
       "edit": true
     },
     {
-      "default": "ghcr.io/bkm016",
+      "default": "103.238.187.8:8083",
       "envKey": "HC_IMAGE_REGISTRY",
       "required": true,
       "type": "text",
@@ -296,7 +295,7 @@
       "edit": true
     },
     {
-      "default": "official",
+      "default": "tuna",
       "envKey": "HC_JAVA_MIRROR",
       "required": true,
       "type": "select",
@@ -331,7 +330,7 @@
       "edit": true
     },
     {
-      "default": "false",
+      "default": "true",
       "edit": true,
       "envKey": "HC_CN_MIRRORS",
       "required": true,
@@ -362,7 +361,7 @@
       }
     },
     {
-      "default": "",
+      "default": "https://ghfast.top/",
       "envKey": "HC_GITHUB_PROXY",
       "required": false,
       "type": "text",
@@ -384,11 +383,11 @@
     }
   ],
   "notes": [
-    "镜像由 .github/workflows/docker.yml 发布到 GHCR（ghcr.io/<owner>/hypercraft-api|web），推送 v* 标签时打对应版本 tag；可在表单中改为私有镜像仓库。",
+    "镜像托管在私有 Nexus（103.238.187.8:8083，HTTP），安装主机需在 /etc/docker/daemon.json 配置 insecure-registries。",
     "HC_DEV_TOKEN 留空时由 entrypoint-api.sh 生成并持久化到 data/.secrets.env；JWT 密钥同样持久化。",
     "同源网关 nginx 把 /api/* 去前缀转发到 api:8080，前端 NEXT_PUBLIC_API_URL=/api。",
+    "仅构建 amd64 镜像。",
     "1panel-network 为所有应用共享，网关按容器名 ${CONTAINER_NAME}-api / -web 寻址，避免与其他应用的 api/web 服务名冲突。",
-    "API 镜像内嵌 mise，运行环境安装到 data/mise；默认自带 JRE 21 作为系统 Java。国内服务器可在参数中开启清华 / npmmirror 镜像与 GitHub 代理。",
-    "附加端口 HC_EXTRA_PORTS 为手工加入 docker-compose.yml（ports: \"${HC_EXTRA_PORTS:-25566-25575}:${HC_EXTRA_PORTS:-25566-25575}\"），生成器不支持端口范围；重新生成后需手动补回，并补回 conf/nginx.conf。"
+    "API 镜像内嵌 mise，Java 运行环境安装到 data/mise；默认自带 JRE 21 作为系统 Java。"
   ]
 }
